@@ -1,0 +1,25 @@
+
+原文博客链接：http://blog.csdn.net/two_water/article/details/53891952
+题目：
+class Base{
+    private String string_base="base";
+    public Base(){
+        CallName();
+    }
+    public void  callName(){
+        System.out.Println(string_base);
+    }
+    static class Sub extend Base{
+        private String string_base="sub";
+        public void CallName(){
+        System.out.println(string_base);
+    }
+    public static void main(String[] args){
+        Base b=new Sub();
+    }
+}
+相关知识点：类加载机制以及类的初始化过程，类的继承机制等。
+jvm加载类的过程：
+子类加载时必须进行父类的初始化：当Sub类加载时，先为他自身的string_base分配内存空间，内存置0，此时string_base=null。然后调用sub类的构造方法，该类并没有重写父类
+的构造方法，所以默认调用父类的无参构造方法。此时父类进行初始化，为string_base分配内存空间并初始化为null，然后调用callName（）方法，因为子类重写了父类的callName方法，
+所以该次调用的是子类的构造方法，此时子类的string_base为null，并没有赋值，所以callName（）方法输出的值为null。
