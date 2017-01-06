@@ -1,0 +1,22 @@
+public class HashMap2JsonUtil {
+    /**
+     * hashMap转JSON
+     *
+     * @param hashMap
+     * @return
+     */
+    public static JSONStringer createJSON(HashMap<String, Object> hashMap) {
+        JSONStringer jsonText = new JSONStringer();
+        try {
+            jsonText.object();
+            for (HashMap.Entry<String, Object> entry : hashMap.entrySet()) {
+                jsonText.key(entry.getKey());
+                jsonText.value(entry.getValue());
+            }
+            jsonText.endObject();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return jsonText;
+    }
+}
