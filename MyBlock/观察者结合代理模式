@@ -1,1 +1,220 @@
+##概述
+此观察模式是基于PanoramaImageView项目（github地址：https://github.com/gjiazhe/PanoramaImageView）的需求来实现的，功能上与原项目的
+GyroscopeObserver基本相同，额外做了接口的完善并与代理模式进行结合，将观察者与被观察者解耦，更具拓展性。
+
+###观察者模式：
+对于设计模式来说，uml类图最直观简明的阐述方式：
+
+![这里写图片描述](http://img.blog.csdn.net/20170105105003360?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvZW5qb3lfYXphZA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+上图《大话设计模式》一书中对观察者模式uml类图的说明，这本书对于设计模式初学者是很不错的。
+对于观察者模式的教程说明网上资源甚多，但核心就是上面的类图。[一篇介绍比较全面的文章](http://www.cnblogs.com/java-my-life/archive/2012/05/16/2502279.html)
+
+###代理模式：
+
+上uml图：
+
+![这里写图片描述](http://img.blog.csdn.net/20170105113040742?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvZW5qb3lfYXphZA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+上博客：[代理模式](http://blog.csdn.net/chenssy/article/details/11179815)
+
+###此次实现的观察者模式：
+
+继续上uml类图：
+
+![这里写图片描述](http://img.blog.csdn.net/20170105162655800?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvZW5qb3lfYXphZA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+
+实现的思路：
+
+一：被观察者（即观察者模式中的subject，也被称为observed）的实现
+接口：只有一个updata方法
+
+```
+
+public interface BaseObservedInterface<T> {
+    void updata(T t);
+}
+
+```
+GyroscopeObservedImpl（实现类）：获取陀螺仪传感器并实现监听方法，将处理后的数据通过updata方法调用controller.updata()。(这里并不是正宗的代理模式，只是借用了代理的思想。为什么不直接调用controller.updata()，这里考虑了程序的可拓展性)，代码如下
+
+```
+public class GyroscopeObservedImpl implements SensorEventListener, BaseObservedInterface<GyroscopeControllInterface> {
+    private SensorManager mSensorManager;
+    private double rotateRadianX;
+    private double rotateRadianY;
+    private double rotateRadianZ;
+    private double rotateRadian;
+    private long lastTimestamp;
+    private static final float NS2S = 1.0f / 1000000000.0f;
+    private static final int rotateAroundX = 1;
+    private static final int rotateAroundY = 2;
+    private static final int rotateAroundZ = 3;
+    private static int type;
+    private GyroscopeControllInterface gyroscopeControllInterface;
+
+    public GyroscopeObservedImpl(GyroscopeControllInterface gyroscopeControllInterface) {
+        this.gyroscopeControllInterface = gyroscopeControllInterface;
+    }
+
+    public void register(Context context) {
+        Log.e("TAG", "register: " + "注册了");
+        if (mSensorManager == null) {
+            mSensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        }
+        Sensor sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        mSensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_FASTEST);
+    }
+
+    public void unregister() {
+        Log.e("TAG", "register: " + "解除注册了");
+        if (mSensorManager != null) {
+            mSensorManager.unregisterListener(this);
+            mSensorManager = null;
+        }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (lastTimestamp == 0) {
+            lastTimestamp = event.timestamp;
+            return;
+        }
+        float angularX = Math.abs(event.values[0]);
+        float angularY = Math.abs(event.values[1]);
+        float angularZ = Math.abs(event.values[2]);
+
+        final float dT = (event.timestamp - lastTimestamp) * NS2S;
+        if (angularX > angularY + angularZ) {  //围绕x轴运动，即手机上下摆动（脑补拿手机打手板的动作）
+            rotateRadianX += event.values[0] * dT;
+            rotateRadian = rotateRadianX;
+            type = rotateAroundX;
+        } else if (angularY > angularX + angularZ) {//围绕y轴运动，即手机左右摆动(脑补四驱兄弟里面的“旋风冲锋龙卷风”)
+            rotateRadianY += event.values[1] * dT;
+            type = rotateAroundY;
+            rotateRadian = rotateRadianY;
+        } else {//围绕Z轴运动，可以理解为手机放在桌子上转圈
+            rotateRadianZ += event.values[2] * dT;
+            type = rotateAroundZ;
+            rotateRadian = rotateRadianZ;
+        }
+        updata(gyroscopeControllInterface);
+        lastTimestamp = event.timestamp;
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+
+    @Override
+    public void updata(GyroscopeControllInterface gyroscopeControllInterface) {
+        gyroscopeControllInterface.updata(rotateRadian, type);
+    }
+}
+
+```
+二：Controller的实现：我们将观察者的注册，解除从Observed（Subject）中提出来，交予controller实现。
+
+BaseControllerInterface接口：这个接口我们定义了对观察者的注册，解除以及更新的基本方法
+
+```
+
+public interface BaseControllerInterface<T> {
+    void attach(T t);
+
+    void detach(T t);
+
+    void updata();
+}
+
+```
+
+GyroscopeControllInterface接口：这个接口根据需求重载了updata()方法
+
+```
+public interface GyroscopeControllInterface extends BaseControllerInterface<ImgvObserve> {
+    void updata(double rotateRadian, int type);
+}
+
+```
+
+GyroscopeControllerImpl（实现类）：没啥说的，很简单，代码如下
+
+```
+public class GyroscopeControllerImpl implements GyroscopeControllInterface {
+    private List<ImgvObserve> observaeList;
+
+    public GyroscopeControllerImpl() {
+        observaeList = new ArrayList<>();
+    }
+
+    @Override
+    public void updata(double rotateRadian, int type) {
+        for (ImgvObserve imgvObserve : observaeList) {
+            imgvObserve.updata(rotateRadian, type);
+        }
+    }
+
+
+    @Override
+    public void attach(ImgvObserve observer) {
+        if (!observaeList.contains(observer)) {
+            observaeList.add(observer);
+        }
+    }
+
+    @Override
+    public void detach(ImgvObserve observer) {
+        if (observaeList.contains(observer)) {
+            observaeList.remove(observer);
+        }
+    }
+
+    @Override
+    public void updata() {
+
+    }
+}
+
+```
+三：观察者的实现
+接口：这里是根据需求直接写的接口（这里的updata方法并不一定要和上边一样，可以根据需求灵活改动）
+
+```
+
+public interface ImgvObserve {
+    void updata(double rotateRadian, int type);
+}
+
+```
+PanoramaImageView（实现类）：在原作者的PanoramaImageView基础上做的改动，自己重写了一遍核心方法，有部分细节会不太一样。代码较多，这里只贴出观察者相关代码
+
+```
+ @Override
+    public void updata(double rotateRadian, int type) {
+        //如果type与当前图片的type一致
+        if (orientation == type) {
+            //限制旋转弧度最大为maxRotateRadian
+            if (rotateRadian >= maxRotateRadian) {
+                rotateRadian = maxRotateRadian;
+            } else if (rotateRadian <= -maxRotateRadian) {
+                rotateRadian = -maxRotateRadian;
+            }
+            //计算出比例值
+            progress = (float) (rotateRadian / maxRotateRadian);
+            invalidate();
+        }
+    }
+
+```
+
+源码地址：https://github.com/Ljy2016/PanoramaImageView
+
+##总结：
+
+观察者模式在android开发中是应用较为普遍的模式，像eventBus，Rxjava等事件管理框架都是基于观察者模式实现的。此次的仿写轮子固然收获很多，但是限于经验还远不够丰富，视野比较狭隘，对于接口的设计，模式的应用还存在很多的问题，颇有些坐井观天的感觉，那就努力的向上爬吧，爬出井口才是更大的天地。
+
+
+
 
