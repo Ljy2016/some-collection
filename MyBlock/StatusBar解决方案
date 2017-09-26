@@ -1,0 +1,62 @@
+沉浸式状态栏解决方案
+第三方库：  https://github.com/laobie/StatusBarUtil
+建议方案：
+Activity：（以下都在方法在setContentView()方法后调用）
+（1）标准title的Activity：
+     直接设置颜色——
+
+     StatusBarUtil.setColor(this, Color.parseColor("#2b9ced"));
+
+（2）title为图片的Acticity：
+     5.0以下直接设置颜色，5.0以及5.0以上调用setTranslucentForImageView()方法——
+
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+    StatusBarUtil.setTranslucentForImageView(this, null);
+}else {
+    StatusBarUtil.setColor(this, Color.parseColor("#2b9ced"));
+}
+
+Fragment： 先在fragment的宿主activity中调用：
+ StatusBarUtil.setColor(this, Color.parseColor("#2b9ced"))，为5.0以下设置基本颜色。
+（以下方法都在onActivityCreated()中调用）
+（1）标准title的Fragment：
+    
+     在布局文件中加入一个view，模拟statusBar：
+
+<RelativeLayout
+    android:id="@+id/fake_status_bar"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/colorPrimary"/>
+
+
+5.0以下不用处理，5.0及以上在代码中获取状态栏高度，并动态设置到view上面，再设置相应颜色：
+
+//设置颜色
+public void setStatusBar() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        setStatusBarHeight(fakeStatusBar);
+        fakeStatusBar.setBackgroundColor(Color.parseColor("#2b9ced"));
+    }
+}
+/设置状态栏高度
+public void setStatusBarHeight(View view) {
+    int result = 0;
+    int resourceId = getActivity().getResources().getIdentifier("status_bar_height", "dimen", "android");
+    if (resourceId > 0) {
+        result = getResources().getDimensionPixelSize(resourceId);
+    }
+    RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) view.getLayoutParams();
+    layoutParams.height = result;
+    view.setLayoutParams(layoutParams);
+}
+
+
+（2）title为图片的Fragment：
+     5.0以下不用处理，5.0及以上直接调用：
+
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+    StatusBarUtil.setTranslucentForImageViewInFragment(getActivity(), toolbar);
+}
+
+其中toolbar为向下偏移的view，根据需要可以传入不同的view。
