@@ -11,10 +11,10 @@
 （6）装饰者框架遇到的一些问题：
      1.应提供回调接口用以更新界面。
      2.工厂的model要灵活设置
-     
-（7）按键模拟：
+（7）按键模拟：（yes）
      http://www.cnblogs.com/travellife/p/4103806.html
-     
-（8）截屏
+（8）截屏（yes）
      http://blog.csdn.net/weizongwei5/article/details/54312328
+（9）SIFT算法详解
+     http://blog.csdn.net/zddblog/article/details/7521424
  
