@@ -1,4 +1,4 @@
-android对于权限的管理
+﻿android对于权限的管理
 http://androiddoc.qiniudn.com/preview/features/runtime-permissions.html
 UMl类图与时序图
 http://design-patterns.readthedocs.io/zh_CN/latest/read_uml.html
@@ -264,3 +264,6 @@ opencv模板匹配
 http://blog.csdn.net/dcrmg/article/details/52548790
 wps关闭广告
 https://blog.csdn.net/a839766550/article/details/80555482
+电子书下载网站集合
+http://oxingtui.com/other/resource.htm
+
