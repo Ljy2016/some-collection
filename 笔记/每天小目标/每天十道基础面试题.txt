@@ -1,0 +1,47 @@
+
+ 题库：https://www.cnblogs.com/dd-dd/p/6560092.html
+       https://blog.csdn.net/c6E5UlI1N/article/details/79386571
+	   https://blog.csdn.net/qq_15700209/article/details/78910602
+
+（1）什么情况下，Activity的onNewInstent()方法会执行？Activity的启动模式相关。
+     
+	 答：当任务栈中存在Activity的实例时，如果Activity的启动模式为SingleInstance或SingleTask，启动新的Activity时会触发该方法。另外，
+	 当Activity实例位于栈顶且启动模式为SingleTop时也会触发。
+		
+（2）Activity A使用startActivityForResult方法启动 Activity B ，B生么都不做并返回 A，A中的 onActivityResult 回调是否会执行？
+     
+	 答：不一定，requestCode==-1时不会调用，当 requestCode！=-1 的时候一定会被调用。
+	 
+	 知识点：1.当 Activity 设置 noHistory 为 true 时，不会回调 onActivityResult 。
+	         
+			 2.onActivityResult 在 onResume 之前执行。
+			 
+（3）Fragment能否不依赖于Activity存在？简析一下Fragment的栈管理。
+			 
+	 答：不能，Fragment 的生命周期依赖 Activity 的生命周期，一个 Activity 处于停止状态，则 Fragment 无法启动，Activity 销毁，Fragment
+	 也会被销毁。
+	     Fragment 的栈由 Activity 管理，可以通过 FragmentTransaction 的 addToBackStack 方法将 Fragment 加入回退栈。
+
+（4）对于同一个Service，在被start启动之后还能不能被bind？
+      
+	 答：可以。
+	 
+（5）如何单独对ListView上的一个item进行更新？
+
+     答：1.对指定的view进行更新：
+           更新数据集
+           计算当前可见位置，若待更新位置可见
+           获取item布局，找到相应显示的view，设置view的显示。
+         2.同上，至若可见位置 调用 adapetr 的 getView() 方法。		   
+（6）设计师只给了一套1280*800的UI图标注，如何进行其它分辨率尺寸屏幕的适配？
+
+     答：对于分辨率 dp dpi px xxhdpi 等像素适配知识存在盲点  
+	 
+（7）Acticity和Service是否在同一个进程工作?
+     
+	 答：取决于 Service 是否设置了 android:process=":remote" 属性或 android:process="remote" 属性。若设置了，则不在同一个进程。
+	 
+（8）横竖屏切换时Activity的生命周期变化?
+
+     答：
+	 
